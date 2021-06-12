@@ -6,26 +6,65 @@
 
 #include "./heap.h"
 
+#define JIM_IMPLEMENTATION
+#include "jim.h"
+
+typedef struct Node Node;
+
+struct Node {
+    char x;
+    Node *left;
+    Node *right;
+};
+
+Node *generate_tree(size_t level_cur, size_t level_max)
+{
+    if (level_cur < level_max) {
+        Node *root = heap_alloc(sizeof(*root));
+        assert((char) level_cur - 'a' <= 'z');
+        root->x = level_cur + 'a';
+        root->left = generate_tree(level_cur + 1, level_max);
+        root->right = generate_tree(level_cur + 1, level_max);
+        return root;
+    } else {
+        return NULL;
+    }
+}
+
+void print_tree(Node *root, Jim *jim)
+{
+    if (root != NULL) {
+        jim_object_begin(jim);
+
+        jim_member_key(jim, "value");
+        jim_string_sized(jim, &root->x, 1);
+
+        jim_member_key(jim, "left");
+        print_tree(root->left, jim);
+
+        jim_member_key(jim, "right");
+        print_tree(root->right, jim);
+
+        jim_object_end(jim);
+    } else {
+        jim_null(jim);
+    }
+}
+
 #define N 10
 
 void *ptrs[N] = {0};
 
 int main()
 {
-    for (int i = 0; i < N; ++i) {
-        ptrs[i] = heap_alloc(i);
-    }
+    Node *root = generate_tree(0, 3);
 
-    for (int i = 0; i < N; ++i) {
-        if (i % 2 == 0) {
-            heap_free(ptrs[i]);
-        }
-    }
+    Jim jim = {
+        .sink = stdout,
+        .write = (Jim_Write) fwrite,
+    };
 
-    heap_alloc(10);
-
-    chunk_list_dump(&alloced_chunks);
-    chunk_list_dump(&freed_chunks);
+    print_tree(root, &jim);
 
     return 0;
 }

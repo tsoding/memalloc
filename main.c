@@ -66,5 +66,20 @@ int main()
 
     print_tree(root, &jim);
 
+    printf("------------------------------\n");
+
+    size_t heap_ptrs_count = 0;
+    for (size_t i = 0; i < alloced_chunks.count; ++i) {
+        for (size_t j = 0; j < alloced_chunks.chunks[i].size; ++j) {
+            uintptr_t *p = (uintptr_t*) alloced_chunks.chunks[i].start[j];
+            if (heap <= p && p < heap + HEAP_CAP_WORDS) {
+                printf("DETECTED HEAP POINTER: %p\n", (void*) p);
+                heap_ptrs_count += 1;
+            }
+        }
+    }
+
+    printf("Detected %zu heap pointers\n", heap_ptrs_count);
+
     return 0;
 }

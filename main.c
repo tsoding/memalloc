@@ -2,8 +2,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #define HEAP_CAP 640000
+
+static_assert(HEAP_CAP % sizeof(uintptr_t) == 0,
+              "The heap capacity is not divisible by "
+              "the size of the pointer. Of the platform.");
+uintptr_t heap[HEAP_CAP] = {0};
+
 #define CHUNK_LIST_CAP 1024
 
 #define UNIMPLEMENTED \
@@ -14,7 +21,7 @@
     } while(0)
 
 typedef struct {
-    char *start;
+    uintptr_t *start;
     size_t size;
 } Chunk;
 
@@ -49,7 +56,7 @@ void chunk_list_merge(Chunk_List *dst, const Chunk_List *src)
 
         if (dst->count > 0) {
             Chunk *top_chunk = &dst->chunks[dst->count - 1];
-            
+
             if (top_chunk->start + top_chunk->size == chunk.start) {
                 top_chunk->size += chunk.size;
             } else {
@@ -66,12 +73,12 @@ void chunk_list_dump(const Chunk_List *list)
     printf("Chunks (%zu):\n", list->count);
     for (size_t i = 0; i < list->count; ++i) {
         printf("  start: %p, size: %zu\n",
-               list->chunks[i].start,
+               (void*) list->chunks[i].start,
                list->chunks[i].size);
     }
 }
 
-int chunk_list_find(const Chunk_List *list, void *ptr)
+int chunk_list_find(const Chunk_List *list, uintptr_t *ptr)
 {
     for (size_t i = 0; i < list->count; ++i) {
         if (list->chunks[i].start == ptr) {
@@ -91,8 +98,6 @@ void chunk_list_remove(Chunk_List *list, size_t index)
     list->count -= 1;
 }
 
-char heap[HEAP_CAP] = {0};
-
 Chunk_List alloced_chunks = {0};
 Chunk_List freed_chunks = {
     .count = 1,
@@ -102,22 +107,24 @@ Chunk_List freed_chunks = {
 };
 Chunk_List tmp_chunks = {0};
 
-void *heap_alloc(size_t size)
+void *heap_alloc(size_t size_bytes)
 {
-    if (size > 0) {
+    const size_t size_words = (size_bytes + sizeof(uintptr_t) - 1) / sizeof(uintptr_t);
+
+    if (size_words > 0) {
         chunk_list_merge(&tmp_chunks, &freed_chunks);
         freed_chunks = tmp_chunks;
 
         for (size_t i = 0; i < freed_chunks.count; ++i) {
             const Chunk chunk = freed_chunks.chunks[i];
-            if (chunk.size >= size) {
+            if (chunk.size >= size_words) {
                 chunk_list_remove(&freed_chunks, i);
 
-                const size_t tail_size = chunk.size - size;
-                chunk_list_insert(&alloced_chunks, chunk.start, size);
+                const size_t tail_size_words = chunk.size - size_words;
+                chunk_list_insert(&alloced_chunks, chunk.start, size_words);
 
-                if (tail_size > 0) {
-                    chunk_list_insert(&freed_chunks, chunk.start + size, tail_size);
+                if (tail_size_words > 0) {
+                    chunk_list_insert(&freed_chunks, chunk.start + size_words, tail_size_words);
                 }
 
                 return chunk.start;

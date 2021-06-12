@@ -57,7 +57,15 @@ void *ptrs[N] = {0};
 
 int main()
 {
+    stack_base = (const uintptr_t*)__builtin_frame_address(0);
+
+    for (size_t i = 0; i < 10; ++i) {
+        heap_alloc(i);
+    }
+
     Node *root = generate_tree(0, 3);
+
+    printf("root: %p\n", (void*)root);
 
     Jim jim = {
         .sink = stdout,
@@ -66,20 +74,15 @@ int main()
 
     print_tree(root, &jim);
 
+    printf("\n------------------------------\n");
+    heap_collect();
+    chunk_list_dump(&alloced_chunks, "Alloced");
+    chunk_list_dump(&freed_chunks, "Freed");
     printf("------------------------------\n");
-
-    size_t heap_ptrs_count = 0;
-    for (size_t i = 0; i < alloced_chunks.count; ++i) {
-        for (size_t j = 0; j < alloced_chunks.chunks[i].size; ++j) {
-            uintptr_t *p = (uintptr_t*) alloced_chunks.chunks[i].start[j];
-            if (heap <= p && p < heap + HEAP_CAP_WORDS) {
-                printf("DETECTED HEAP POINTER: %p\n", (void*) p);
-                heap_ptrs_count += 1;
-            }
-        }
-    }
-
-    printf("Detected %zu heap pointers\n", heap_ptrs_count);
+    root = NULL;
+    heap_collect();
+    chunk_list_dump(&alloced_chunks, "Alloced");
+    chunk_list_dump(&freed_chunks, "Freed");
 
     return 0;
 }

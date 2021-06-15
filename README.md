@@ -18,4 +18,3 @@ $ ./heap
 ## Screencast
 
 [![thumbnail](./thumbnails/part-1.png)](https://www.youtube.com/watch?v=sZ8GJ1TiMdk) [![thumbnail](./thumbnails/part-2.png)](https://www.youtube.com/watch?v=2JgEKEd3tw8)
->>>>>>> Add Links to the screencasts

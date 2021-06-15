@@ -1,5 +1,7 @@
 # Artifacts of those Memory Management Tsoding Sessions
 
+[![thumbnail](./thumbnails/part-1.png)](https://www.youtube.com/watch?v=sZ8GJ1TiMdk) [![thumbnail](./thumbnails/part-2.png)](https://www.youtube.com/watch?v=2JgEKEd3tw8)
+
 ## Quick Start
 
 ```console
@@ -14,7 +16,3 @@ $ ./heap
 - No tricks that obscure the pointers (like XOR Linked Lists).
 - Probably works only on x86_64
 - Probably works only when compiled with GCC
-
-## Screencast
-
-[![thumbnail](./thumbnails/part-1.png)](https://www.youtube.com/watch?v=sZ8GJ1TiMdk) [![thumbnail](./thumbnails/part-2.png)](https://www.youtube.com/watch?v=2JgEKEd3tw8)

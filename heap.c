@@ -67,12 +67,19 @@ void chunk_list_dump(const Chunk_List *list, const char *name)
     }
 }
 
+// Uses binary search to find chunks
 int chunk_list_find(const Chunk_List *list, uintptr_t *ptr)
 {
-    for (size_t i = 0; i < list->count; ++i) {
-        if (list->chunks[i].start == ptr) {
-            return (int) i;
-        }
+	int l = 0, r = list->count; // left and right
+	int	mid = l + (r - l) / 2;
+    while(mid >= l && mid <= r){
+		if(list->chunks[mid].start > ptr)
+			r = mid - 1;
+		else if(list->chunks[mid].start < ptr)
+			l = mid + 1;
+		else 
+			return (int) mid;
+		mid = l + (r - l) / 2;
     }
 
     return -1;
